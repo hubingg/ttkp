@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>天天酷跑</title>
+</head>
+<body>
+<canvas id="c" width="960" height="640"></canvas>
+<script>
+    var cv = document.querySelector("#c");
+    var ctx = cv.getContext("2d");
+    cv.style.border = "1px solid red";
+
+    //整个游戏的全局对象
+    (function (w) {
+        var Fly = {};
+        w.Fly = Fly;
+    })(window);
+    //登录
+    (function (Fly) {
+        var Login = function (options) {
+            this.ctx = options.ctx;
+            this.numScore = 0;//金币
+            this.numLife = 5;//生命
+            this.maxScore = 0;//总分
+            this.numDia = 0;//钻石
+            this.numColorDia = 0;//彩钻
+            this.x = 0;//点击鼠标的坐标
+            this.y = 0;
+            //游戏分数
+            this.curScore = 0;
+            this.curM = 0;
+
+        };
+        Login.prototype = {
+            login: function () {
+                var self = this;
+//                self.clear();//清除画布
+                var img = new Image();
+                img.src = "img/paoku 00200.png";
+                self.step=0; //刷新频率
+                self.step1=1; //人物初始添加位置
+                self.setp2=8; //人物初始添加位置
+                self.setp1Flag=true; //人物上下运动标记
+                self.setp2Flag=true;
+                self.beginPage=true;//为false进入游戏开始界面
+                img.onload = function () {      //腾讯logo界面
+                    self.ctx.drawImage(img, 0, 0, img.width, img.height);
+                }; 
+                setTimeout(function () {
+                    cv.addEventListener("click", function (e) {
+                        self.x = e.offsetX;
+                        self.y = e.offsetY;
+                        console.log(self.x, self.y);
+                        e.stopPropagation();
+                        e.preventDefault();
+
+                    });
+                    var img1 = new Image();
+                    img1.src = "img/Splash_1.png";
+                    img1.addEventListener("load", function () {
+                        //登录界面
+                        (function rander() {
+                            self.clear();//清除画布
+                            //图片参数
+                            self.imgNum=[
+                                {x0:322,y0:458,w:568,h:319,x1:0,y1:0,w1:960,h1:640}, //背景
+                                {x0:0,y0:465,w:195,h:245,x1:30,y1:10,w1:195,h1:245},//天天酷跑
+                                {x0:560,y0:785,w:180,h:160,x1:130,y1:200 + self.step1,w1:180,h1:160},//红精灵
+                                {x0:255,y0:0,w:335,h:455,x1:280,y1:160 + self.setp2,w1:340,h1:455},//猫小萌
+                                {x0:590,y0:0,w:272,h:275,x1:680,y1:260 + self.setp2,w1:272,h1:275},//魔女娜娜
+                                {x0:0,y0:0,w:250,h:465,x1:500,y1:90 + self.step1,w1:230,h1:465},//金枪小帅
+                                {x0:862,y0:150,w:162,h:70,x1:780,y1:210,w1:162,h1:70},//蝙蝠
+                                {x0:0,y0:731,w:300,h:90,x1:150,y1:500,w1:300,h1:90},//微信登录
+                                {x0:0,y0:822,w:300,h:90,x1:500,y1:500,w1:300,h1:90},//QQ登录
+
+                            ];
+                            function drawImg(dom,x0,y0,w,h,x1,y1,w1,h1){
+                                self.ctx.drawImage(dom,x0,y0,w,h,x1,y1,w1,h1);
+                            }
+                            for(var i=0;i<self.imgNum.length;i++){//绘制数组里的图片
+                                drawImg(img1,self.imgNum[i].x0,self.imgNum[i].y0,self.imgNum[i].w,self.imgNum[i].h,self.imgNum[i].x1,self.imgNum[i].y1,self.imgNum[i].w1,self.imgNum[i].h1);
+                            }
+                            //蓝精灵
+                            self.ctx.save();
+                            self.ctx.translate(cv.width, 0);
+                            self.ctx.scale(-1, 1);
+                            self.ctx.drawImage(img1, 350, 785, 160, 180, cv.width - 930, 430 + self.step1, 160, 180);
+                            self.ctx.restore()
+                            //图片动起来
+                            self.step++;
+                            if (!(self.step % 4)) {
+                                if (self.step1 == 0) {
+                                    self.setp1Flag = true;
+                                } else if (self.step1 == 10) {
+                                    self.setp1Flag = false;
+                                }
+                                if (self.setp2 == 0) {
+                                    self.setp2Flag = true;
+                                } else if (self.setp2 == 10) {
+                                    self.setp2Flag = false;
+                                }
+
+                                if (self.setp1Flag) {
+                                    self.step1++;
+                                } else {
+                                    self.step1--;
+                                }
+                                if (self.setp2Flag) {
+                                    self.setp2++;
+                                } else {
+                                    self.setp2--;
+                                }
+                            }
+                            //判断路径
+                            self.ctx.rect(150, 500, 300, 90);
+                            self.ctx.rect(500, 500, 300, 90);
+                            if (self.ctx.isPointInPath(self.x, self.y)) {
+                                self.beginPage = false;
+                                self.x = 0;//将点击事件的坐标进行归零,不然会触发其他路径的事件
+                                self.y = 0;
+                            };
+                            if (self.beginPage) {
+                                window.requestAnimationFrame(rander);
+                            } else {
+                                self.begin();//点击登录成功转到游戏开始页面
+                            }
+                        })();
+                    });
+                }, 2000);
+            },
+            begin: function () {
+                var self = this;
+//                self.clear();//清除画布
+                var img1 = new Image();
+                var img2 = new Image();
+                var img3 = new Image();
+                var img4 = new Image();
+                img1.src = "img/Background.png";
+                img2.src = "img/UI_Role_MoNv.png";
+                img3.src = "img/UI_Pet.png";
+                img4.src = "img/ui_gameout.png";
+                var eye = 0;
+                var b1 = 2, b2 = 9, b3 = 5, b1flag = true, b2flag = true, b3flag = false;
+                var step = 0;//刷新频率
+                var step1 = 0;//一秒刷新的次数
+                var beginGame = true;//开始游戏
+                //红心移动变量
+                var sX = 0;
+                var sY = 0;
+                var times = 0;
+                self.beginImg=[];
+                img4.addEventListener("load", function () {
+                    (function rander() {
+                        self.clear();//清除画布
+                        self.ctx.drawImage(img1, 0, 0, img1.width, img1.height);//背景
+                        //眨眼睛
+                        if ((step % 120) >= 0 && (step % 120) < 5) {
+                            eye = 1;
+                        } else if ((step % 120) >= 5 && (step % 120) < 10) {
+                            eye = 0;
+                        } else {
+                            eye = 2;
+                        };
+                        self.beginImg=[
+                            {x0:25,y0:(320 + eye * 43),w:94,h:43,x1:670,y1:210,w1:94,h1:40}, //眼睛
+                            {x0:190,y0:337,w:61,h:25,x1:573,y1:275 + b1,w1:61,h1:25}, //蝙蝠1
+                            {x0:167,y0:435,w:84,h:30,x1:600,y1:170 + b2,w1:84,h1:30}, //蝙蝠2
+                            {x0:190,y0:400,w:61,h:23,x1:613,y1:190 + b2,w1:61,h1:23},//蝙蝠2影子
+                        ];
+                        function drawImg(dom,x0,y0,w,h,x1,y1,w1,h1){
+                                self.ctx.drawImage(dom,x0,y0,w,h,x1,y1,w1,h1);
+                        };
+                        //绘制数组里面的图片
+                        for(var i=0;i<self.beginImg.length;i++){//绘制数组里的图片
+                            drawImg(img2,self.beginImg[i].x0,self.beginImg[i].y0,self.beginImg[i].w,self.beginImg[i].h,self.beginImg[i].x1,self.beginImg[i].y1,self.beginImg[i].w1,self.beginImg[i].h1);
+                        }
+                        self.ctx.drawImage(img3, 0, 188, 156, 156, 780, 260 + b3, 156, 156); //宠物
+
+                        self.ctx.save();
+                        self.ctx.textAlign = "right";
+                        self.ctx.font = "25px '微软雅黑'";
+                        self.ctx.fillStyle = "#FFE686";
+                        self.ctx.fillText(self.numLife, 230, 60);//生命
+                        self.ctx.fillText(self.numScore, 420, 60);//得分
+                        self.ctx.fillText(self.numDia, 615, 60);//钻石
+                        self.ctx.fillText(self.numColorDia, 797, 60);//彩钻
+                        self.ctx.restore();
+
+                        //图片动起来
+                        step1++;
+                        if (!(step1 % 4)) {
+                            if (b1 == 0) {
+                                b1flag = true;
+                            } else if (b1 == 10) {
+                                b1flag = false;
+                            }
+                            if (b2 == 0) {
+                                b2flag = true;
+                            } else if (b2 == 10) {
+                                b2flag = false;
+                            }
+                            if (b3 == 0) {
+                                b3flag = true;
+                            } else if (b3 == 10) {
+                                b3flag = false;
+                            }
+
+                            if (b1flag) {
+                                b1++;
+                            } else {
+                                b1--;
+                            }
+                            if (b2flag) {
+                                b2++;
+                            } else {
+                                b2--;
+                            }
+                            if (b3flag) {
+                                b3++;
+                            } else {
+                                b3--;
+                            }
+                        }
+                        step++;
+                        step1 %= 60;
+
+                        //判断路径
+                        self.ctx.rect(688, 528, 230, 70);
+                        if (self.ctx.isPointInPath(self.x, self.y)) {
+                            console.log("点击成功");
+                            beginGame = false;
+                            self.x = 0;//将点击事件的坐标进行归零,不然会出发其他路径的事件
+                            self.y = 0;
+                        };
+                        if (beginGame) {
+                            window.requestAnimationFrame(rander);
+                        } else {
+                            //点击游戏开始,转到游戏页面
+                            times++;
+                            sX = times * 9;
+                            sY = (1 / 2) * .2 * times * times;
+                            if (sX <= 632) {
+                                //红心
+                                self.ctx.drawImage(img4, 658, 560, 110, 102, 133 + sX, 33 + sY, 40, 40);
+                                window.requestAnimationFrame(rander);
+                            } else {
+                                if (self.numLife >0) {
+                                    self.game();//开始游戏
+                                    self.numLife--;
+                                }else{
+                                    window.requestAnimationFrame(rander);
+                                    times=0;//红心回到原来是位置
+                                    beginGame = true;//游戏回到正常状态
+                                }
+                            }
+                        }
+
+                    })();
+                });
+            },
+            game: function () {
+                var self = this;
+//                self.clear();//清除画布
+                var img1 = new Image();
+                var img2b1 = new Image();
+                var img3 = new Image();
+                var img4 = new Image();
+                var img5 = new Image();
+                var img6 = new Image();
+                var img7 = new Image();
+                var step = 0;
+                var step1 = 0;//背景移动的速度
+                var step2 = 0;
+                var step3 = 0;
+                var step4 = 0;
+                var step5 = 0;
+                var random1 = [2, 0, 1];//随机生成桥梁
+                var random2 = [0, 2, 1];//随机生成桥梁
+                var bridgeX = 0;
+                var bridgePath1 = 0;
+
+                var zhuR = 0;//柱子的随机数
+                var zhuRm = 1000;//柱子的随机米数
+
+                var she = 0;//人物
+                var sheTab = 0;//人物切换动作
+                var sheH = 0;//人物跑路
+                var sheFlag = true;//人物跑路
+                var sheJump = 0;//跳跃的高度
+                var sheXY = {x: 410, y: 345};//人物坐标
+                var shexy = [
+                    {x: sheXY.x + 80, y: sheXY.y + 20},
+                    {x: sheXY.x + 80, y: sheXY.y + 20 + 10},
+                    {x: sheXY.x + 80, y: sheXY.y + 20 + 20},
+                    {x: sheXY.x + 80, y: sheXY.y + 20 + 30},
+                    {x: sheXY.x + 80, y: sheXY.y + 20 + 40},
+                    {x: sheXY.x + 80, y: sheXY.y + 20 + 50},
+                    {x: sheXY.x + 80, y: sheXY.y + 20 + 60},
+                    {x: sheXY.x + 80, y: sheXY.y + 20 + 70},
+                    {x: sheXY.x + 80, y: sheXY.y + 20 + 80},
+                    {x: sheXY.x + 80, y: sheXY.y + 20 + 90},
+                    {x: sheXY.x + 80 + 50, y: sheXY.y + 20},
+                    {x: sheXY.x + 80 + 50, y: sheXY.y + 20 + 10},
+                    {x: sheXY.x + 80 + 50, y: sheXY.y + 20 + 20},
+                    {x: sheXY.x + 80 + 50, y: sheXY.y + 20 + 30},
+                    {x: sheXY.x + 80 + 50, y: sheXY.y + 20 + 40},
+                    {x: sheXY.x + 80 + 50, y: sheXY.y + 20 + 50},
+                    {x: sheXY.x + 80 + 45, y: sheXY.y + 20 + 60},
+                    {x: sheXY.x + 80 + 40, y: sheXY.y + 20 + 70},
+                    {x: sheXY.x + 80 + 35, y: sheXY.y + 20 + 85},
+                    {x: sheXY.x + 80 + 30, y: sheXY.y + 20 + 90},
+                    {x: sheXY.x + 80 + 25, y: sheXY.y + 20 + 95}
+
+                ];//人物判断坐标
+
+                var isRun = true;//游戏是否继续
+
+                var key = 0;//按键的key
+
+                var petFlag = true;//宠物标志
+                var petSpeed = 0;//宠物速度
+                var petTab = 0;//宠物切换
+
+                //金币变量
+                var jinTab = 0;
+                var jinTabP = 0;
+                var jinShow1 = [
+                    {flag: true, x: -100, y: 0, tabJ: 0, tabP: 0, jin: 0},
+                    {flag: true, x: -100, y: 0, tabJ: 0, tabP: 0, jin: 0},
+                    {flag: true, x: -100, y: 0, tabJ: 0, tabP: 0, jin: 0},
+                    {flag: true, x: -100, y: 0, tabJ: 0, tabP: 0, jin: 0},
+                    {flag: true, x: -100, y: 0, tabJ: 0, tabP: 0, jin: 0},
+                    {flag: true, x: -100, y: 0, tabJ: 0, tabP: 0, jin: 0},
+                ];//金币+动物
+                var jinShow2 = [
+                    {flag: true, x: -100, y: 0, tabJ: 0, tabP: 0, jin: 0},
+                    {flag: true, x: -100, y: 0, tabJ: 0, tabP: 0, jin: 0},
+                    {flag: true, x: -100, y: 0, tabJ: 0, tabP: 0, jin: 0},
+                    {flag: true, x: -100, y: 0, tabJ: 0, tabP: 0, jin: 0},
+                    {flag: true, x: -100, y: 0, tabJ: 0, tabP: 0, jin: 0},
+                    {flag: true, x: -100, y: 0, tabJ: 0, tabP: 0, jin: 0},
+                ];//仅金币
+                var jinDe = [
+                    [6, 5, 4, 3, 2, 1],
+                    [10, 11, 12, 13, 14, 15, 16, 17]
+                ];//金币得分
+                var bridge = [  
+                    {x: 0, y: 280, w: 360, h: 132},
+                    {x: 0, y: 420, w: 400, h: 132},
+                    {x: 0, y: 560, w: 360, h: 264}
+                ];//桥
+                function Random(random) {
+                    random = [];
+                    var flag = true;
+                    for (var i = 0; i < 3; i++) {
+                        while (true) {
+                            flag = true;
+                            var random1 = Math.floor(Math.random() * 3);
+                            for (var j = 0; j < random.length; j++) {
+                                if (random[j] == random1) {
+                                    flag = false;
+                                    break;
+                                }
+                            }
+                            if (flag) {
+                                random[i] = random1;
+                                break;
+                            }
+                        }
+                    }
+                };
+                //添加按键事件
+                window.addEventListener("keydown", function (e) {
+                    if (sheFlag) {
+                        if (e.key === "d") {
+                            key = "d";
+                            sheTab = 2;
+                            she = 0;
+                            sheFlag = false;
+                        } else if (e.key === "a") {
+                            key = "a";
+                            sheTab = 1;
+                            she = 0;
+                            sheFlag = false;
+                        }
+                    }
+                });
+                window.addEventListener("keyup", function (e) {
+                    if (!sheFlag) {
+                        if (e.key === "a") {
+                            key = 0;//初始按键
+                            sheTab = 0;
+                            sheFlag = true;
+                            sheJump = 0;//跳跃高度归零
+                            sheXY.y = 345;//人物高度回原位
+                        }
+                    }
+                });
+                img1.src = "img/Background_07_1.png";
+                img2b1.src = "img/Item_01_New.fw.png";
+                img3.src = "img/ui_game_n.png";
+                img4.src = "img/ui_font.png";
+                img5.src = "img/Character_Vampire.png";
+                img6.src = "img/pet_25.BIG.png";
+                img7.src = "img/Item_03_New.png";
+                img7.addEventListener("load", function () {
+                    (function rander() {
+                        self.clear();//清除画布
+                        step++;
+                        if (step1 >= (img1.width * 400) / 204) {
+                            step1 = 0;
+                        }
+                        if (step2 >= (img1.width * 300) / 125) {
+                            step2 = 0;
+                        }
+                        if (step3 >= (img1.width * 300) / 124) {
+                            step3 = 0;
+                        }
+                        step1 += .1;
+                        step2 += 1;
+                        step3 += 3;
+                        step4 += 7;
+                        step5 += 7;
+                        self.curM = Math.floor(step / 10);
+                        //背景
+                        self.ctx.drawImage(img1, 0, 0, img1.width, 204, -step1, 0, (img1.width * 400) / 204, 400);
+                        self.ctx.drawImage(img1, 0, 0, img1.width, 204, (img1.width * 400) / 204 - step1, 0, (img1.width * 400) / 204, 400);
+                        //房子
+                        self.ctx.drawImage(img1, 0, 252, img1.width, 125, -step2, 240, (img1.width * 300) / 125, 300);
+                        self.ctx.drawImage(img1, 0, 252, img1.width, 125, (img1.width * 300) / 125 - step2, 240, (img1.width * 300) / 125, 300);
+                        //草丛
+                        self.ctx.drawImage(img1, 0, 380, img1.width, 124, -step3, 360, (img1.width * 300) / 124, 300);
+                        self.ctx.drawImage(img1, 0, 380, img1.width, 124, (img1.width * 300) / 124 - step3, 360, (img1.width * 300) / 124, 300);
+
+                        bridgeX = 0;
+
+                        for (var i = 0; i < 3; i++) {
+                            self.ctx.drawImage(img2b1, bridge[random1[i]].x, bridge[random1[i]].y, bridge[random1[i]].w, bridge[random1[i]].h, bridgeX - step4, 430, bridge[random1[i]].w, bridge[random1[i]].h);
+                            bridgeX += bridge[random1[i]].w;
+                            if (i == 1) {
+                                //画断桥路径
+                                this.ctx.rect(bridgeX + 195 - step4, 455, 40, 10);
+                                // this.ctx.fill();
+                                bridgePath1 = bridgeX + 195 - step4;
+                            }
+                        }
+                        for (var i = 0; i < 3; i++) {
+                            self.ctx.drawImage(img2b1, bridge[random2[i]].x, bridge[random2[i]].y, bridge[random2[i]].w, bridge[random2[i]].h, bridgeX - step5, 430, bridge[random2[i]].w, bridge[random2[i]].h);
+                            bridgeX += bridge[random2[i]].w;
+                            if (i == 1) {
+                                this.ctx.rect(bridgeX + 195 - step5, 455, 40, 10);//画断桥路径
+                                // this.ctx.fill();
+                            }
+                        }
+
+                        //柱子的随机坐标
+                        while (zhuRm - step4 > bridgePath1 - 200 && zhuRm - step4 < bridgePath1 + 40 + 250 || zhuRm - step4 > bridgeX + 195 - step5 - 200 && zhuRm - step4 < bridgeX + 195 - step5 + 40 + 250) {
+                            zhuR = Math.floor(Math.random() * 4);
+                            zhuRm = Math.floor(Math.random() * 1120);
+                        }
+
+                        //柱子路径
+                        if (step * 7 >= 1120) {
+                            //前1120px不绘制柱子
+                            self.ctx.drawImage(img2b1, 495 + 105 * zhuR, 0, 105, 400, zhuRm - step4, -20, 105, 400);
+                            // self.ctx.strokeRect(zhuRm - step4 + 30, -10, 40, 380);
+                            self.ctx.rect(zhuRm - step4 + 30, -10, 40, 380);
+                        }
+                        //重排桥
+                        if (step4 >= 1120) {
+                            step4 = -1120;
+                            Random(random1);
+                            zhuR = Math.floor(Math.random() * 4);
+                            zhuRm = Math.floor(Math.random() * 1120);
+                        }
+                        if (step5 >= 2240) {
+                            step5 = 0;
+                            Random(random2);
+                        }
+
+                        //重排金币+动物
+                        for (var i = 0; i < jinShow1.length; i++) {
+                            jinShow1[i].x -= 7;
+                            if (jinShow1[i].x <= -150) {
+                                jinShow1[i].x = Math.floor(Math.random() * 940) + 940;//动物金币的坐标
+                                jinShow1[i].y = Math.floor(Math.random() * 200) + 200;
+                                jinShow1[i].tabJ = Math.floor(Math.random() * 6);//切换两种金币
+                                jinShow1[i].tabP = Math.floor(Math.random() * 7);
+                                jinShow1[i].jin = jinDe[0][jinShow1[i].tabJ] * 3 + jinDe[1][jinShow1[i].tabP];//金币的得分
+                                jinShow1[i].flag = true;//将金币显示
+                            }
+                        };
+                        //重排金币
+                        for (var i = 0; i < jinShow2.length; i++) {
+                            jinShow2[i].x -= 7;
+                            if (jinShow2[i].x <= -150) {
+                                jinShow2[i].x = Math.floor(Math.random() * 940) + 940;//动物金币的坐标
+                                jinShow2[i].y = 420;
+                                jinShow2[i].tabJ = Math.floor(Math.random() * 6);//切换金币
+                                jinShow2[i].jin = jinDe[0][jinShow2[i].tabJ] * 3;//金币分值
+                                jinShow2[i].flag = true;//将金币显示
+                            }
+                        };
+                        //判断人物坐标是否在金币+动物里面
+                        for (var i = 0; i < shexy.length; i++) {
+                            for (var j = 0; j < jinShow1.length; j++) {
+                                if (shexy[i].x >= (jinShow1[j].x - 20) && shexy[i].x <= (jinShow1[j].x + 50 + 40) && shexy[i].y >= (jinShow1[j].y - 10) && shexy[i].y <= (jinShow1[j].y + 70) && jinShow1[j].flag) {
+                                    jinShow1[j].flag = false;//将金币隐藏
+                                    self.curScore += jinShow1[j].jin;
+                                }
+                            }
+                        };
+                        //判断人物坐标是否在金币里面
+                        for (var i = 0; i < shexy.length; i++) {
+                            for (var j = 0; j < jinShow2.length; j++) {
+                                if (shexy[i].x >= jinShow2[j].x && shexy[i].x <= (jinShow2[j].x + 72) && shexy[i].y >= jinShow2[j].y && shexy[i].y <= (jinShow2[j].y + 40) && jinShow2[j].flag) {
+                                    jinShow2[j].flag = false;//将金币隐藏
+                                    self.curScore += jinShow2[j].jin;
+                                }
+                            }
+                        };
+                        //画金币+动物
+                        for (var i = 0; i < jinShow1.length; i++) {
+                            //判断金币是否显示
+                            if (jinShow1[i].flag) {
+                                self.ctx.drawImage(img7, 40 * jinShow1[i].tabJ, 360, 40, 40, jinShow1[i].x - 20, jinShow1[i].y + 20, 40, 40);//金币
+                                self.ctx.drawImage(img7, 40 * jinShow1[i].tabJ, 360, 40, 40, jinShow1[i].x + 15, jinShow1[i].y - 10, 40, 40);//金币
+                                self.ctx.drawImage(img7, 40 * jinShow1[i].tabJ, 360, 40, 40, jinShow1[i].x + 50, jinShow1[i].y + 20, 40, 40);//金币
+                                self.ctx.drawImage(img7, 70 * jinShow1[i].tabP, 280, 70, 70, jinShow1[i].x, jinShow1[i].y, 70, 70);//金币-动物
+                            }
+                        };
+                        //画金币
+                        for (var i = 0; i < jinShow2.length; i++) {
+                            if (jinShow2[i].flag) {//判断金币是否显示
+                                self.ctx.drawImage(img7, 40 * jinShow2[i].tabJ, 360, 40, 40, jinShow2[i].x, jinShow2[i].y, 40, 40);
+                                self.ctx.drawImage(img7, 40 * jinShow2[i].tabJ, 360, 40, 40, jinShow2[i].x + 36, jinShow2[i].y, 40, 40);
+                                self.ctx.drawImage(img7, 40 * jinShow2[i].tabJ, 360, 40, 40, jinShow2[i].x + 72, jinShow2[i].y, 40, 40);
+                            }
+                        };
+                        //表现-背景
+                        self.ctx.drawImage(img3, 566, 0, 252, 68, 30, 20, 252, 68);
+                        //表现
+                        self.ctx.drawImage(img4, 820, 406, 72, 38, 36, 35, 72, 38);
+                        //分
+                        self.ctx.drawImage(img4, 777, 408, 36, 36, 244, 35, 36, 36);
+                        //分数
+                        self.ctx.save();
+                        self.ctx.fillStyle = "#33CCFF";
+                        self.ctx.font = "35px '微软雅黑'";
+                        self.ctx.textAlign = "right";
+                        self.ctx.fillText(self.curM*12, 246, 65);
+                        self.ctx.restore();
+
+                        //距离-背景
+                        self.ctx.drawImage(img3, 566, 0, 252, 68, 320, 20, 252, 68);
+                        //距离
+                        self.ctx.drawImage(img4, 0, 250, 76, 40, 324, 35, 76, 40);
+                        //米
+                        self.ctx.drawImage(img4, 80, 250, 34, 34, 528, 36, 34, 34);
+                        //米数
+                        self.ctx.save();
+                        self.ctx.fillStyle = "#FFDD44";
+                        self.ctx.font = "35px '微软雅黑'";
+                        self.ctx.textAlign = "right";
+                        self.ctx.fillText(self.curM, 528, 65);
+                        self.ctx.restore();
+
+                        //按键
+                        self.ctx.drawImage(img3, 0, 0, 160, 158, 50, 475, 160, 158);
+                        self.ctx.drawImage(img3, 0, 0, 160, 158, 750, 475, 160, 158);
+
+                        self.ctx.drawImage(img3, 347, 205, 82, 94, 785, 510, 82, 94);
+                        self.ctx.drawImage(img3, 260, 322, 130, 76, 65, 510, 130, 76);
+
+                        //按键遮罩
+                        if (!(key == "a" && !sheFlag)) {
+                            self.ctx.drawImage(img3, 0, 158, 150, 158, 55, 480, 150, 158);
+                        }
+                        if (!(key == "d" && !sheFlag)) {
+                            self.ctx.drawImage(img3, 0, 158, 150, 158, 755, 480, 150, 158);
+                        }
+
+                        //宠物上下运动
+                        if (petFlag) {
+                            petSpeed++;
+                            if (petSpeed >= 50) {
+                                petFlag = false;
+                            }
+                        } else {
+                            petSpeed--;
+                            if (petSpeed <= 0) {
+                                petFlag = true;
+                            }
+                        }
+                        self.ctx.drawImage(img6, 0, 110 * petTab, 110, 110, 600, 150 + petSpeed, 80, 80);
+                        if (!(step % 5)) {
+                            petTab++;
+                            petTab %= 6;
+                        }
+                        //人物-跑
+                        if (sheTab == 0) {
+                            self.ctx.drawImage(img5, 140 * she, sheH * 115, 140, 115, 410, 345, 140, 115);
+                            if (!(step % 3)) {
+                                she++;
+                                she %= 6;
+                                if (she == 0) {
+                                    sheH++;
+                                    sheH %= 2;
+                                }
+                            }
+                            //人物-跳
+                        } else if (sheTab == 2) {
+                            if (!(step % 8)) {
+                                she++;
+                                if (she == 0) {
+                                    sheJump = 0;
+                                } else if (she == 1) {
+                                    sheJump = 60;
+                                } else if (she == 2) {
+                                    sheJump = 120;
+                                } else if (she == 3) {
+                                    sheJump = 150;
+                                } else if (she == 4) {
+                                    sheJump = 150;
+                                } else if (she == 5) {
+                                    sheJump = 120;
+                                } else if (she == 6) {
+                                    sheJump = 60;
+                                } else if (she == 7) {
+                                    sheJump = 0;
+                                }
+
+                                if (she > 7) {
+                                    sheFlag = true;
+                                    sheTab = 0;
+                                    she = 0;
+                                    key = 0;//初始按键
+                                }
+
+                            }
+                            self.ctx.drawImage(img5, 140 * she, 230, 140, 115, 410, 345 - sheJump, 140, 115);
+                            sheXY.y = 345 - sheJump;
+                            //人物-穿梭
+                        } else if (sheTab == 1) {
+                            self.ctx.drawImage(img5, 140 * she, 345, 140, 115, 410, 345, 140, 115);
+                            if (!(step % 2)) {
+                                she++;
+                                if (she >= 4) {
+                                    she = 4;
+                                }
+                            }
+                        }
+                        //人物路径
+                        if (sheTab == 1) {
+                            // this.ctx.strokeRect(sheXY.x + 80, sheXY.y + 55, 50, 60);
+                            shexy = [
+                                {x: sheXY.x + 80, y: sheXY.y + 55},
+                                {x: sheXY.x + 80 + 50, y: sheXY.y + 55},
+                                {x: sheXY.x + 80 + 50, y: sheXY.y + 55 + 60}
+
+                            ];//人物坐标
+                        } else {
+                            // this.ctx.strokeRect(sheXY.x + 80, sheXY.y + 20, 50, 95);
+                            shexy = [
+                                {x: sheXY.x + 80, y: sheXY.y + 20},
+                                {x: sheXY.x + 80 + 50, y: sheXY.y + 20},
+                                {x: sheXY.x + 80 + 10, y: sheXY.y + 20 + 95}
+
+                            ];//人物坐标
+                        }
+                        //判断人物是否在路径内
+                        for (var i = 0; i < shexy.length; i++) {
+
+                            if (self.ctx.isPointInPath(shexy[i].x, shexy[i].y)) {
+                                isRun = false;
+                            }
+                        }
+
+                        if (isRun) {
+                            window.requestAnimationFrame(rander);
+                        } else {
+                            setTimeout(function () {
+                                self.gameOver({
+                                    curScore: self.curScore,
+                                    curM: self.curM
+                                });
+                                self.curScore=0;//当前金币和距离初始化
+                                self.curM=0;
+                            }, 1000);
+                        }
+                    })();
+                });
+            },
+            gameOver: function (options) {
+                var self=this;
+//                self.clear();//清除画布
+                self.gameScore=options.curScore;
+                self.gameM=options.curM;
+                self.numScore += options.curScore;//金币
+
+                if(self.maxScore <= self.gameM*12*12){//总分大于历史最高纪录,将值赋值给最高纪录变量
+                    self.maxScore = self.gameM*12*12;//总分
+                }
+
+                var img1 = new Image();
+                img1.src = "img/gameOver.png";
+
+                var begin=true;
+                var step=0;
+                var gameOverNum=[];
+                //绘制字体的函数
+                function drawText(fillStyle,font ,textAlign ,fillText, fillTextX, fillTextY){
+                        self.ctx.save();
+                        self.ctx.fillStyle = fillStyle;
+                        self.ctx.font = font;
+                        self.ctx.textAlign = textAlign;
+                        self.ctx.fillText(fillText, fillTextX, fillTextY);
+                        self.ctx.restore();
+                };
+                img1.addEventListener("load", function () {
+                    (function rander2() {
+                        self.clear();//清除画布
+                        self.ctx.drawImage(img1, 0, 0, 960, 640, 0, 0, 960, 640);//背景
+                        //从新获取数据
+                        gameOverNum=[
+                    {fillStyle:"#FFDD44",font : "50px '微软雅黑'",textAlign : "left",fillText:self.gameScore, fillTextX:250, fillTextY:450},//金币
+                    {fillStyle:"#4488BB",font : "30px '微软雅黑'",textAlign : "left",fillText:self.gameM, fillTextX:245, fillTextY:295},//距离
+                    {fillStyle:"#4488BB",font : "30px '微软雅黑'",textAlign : "left",fillText:self.gameM*12, fillTextX:245, fillTextY:345},//表现分
+                    {fillStyle:"#CC4411",font : "80px '微软雅黑'",textAlign : "center",fillText:step, fillTextX:300, fillTextY:235},//总分
+                    {fillStyle:"#4C8EBF",font : "30px '微软雅黑'",textAlign : "left",fillText:self.maxScore, fillTextX:292, fillTextY:160},//最高分
+                ];
+                        //画分数+距离+金币
+                        for(var i=0;i<gameOverNum.length;i++){
+                            drawText(gameOverNum[i].fillStyle,gameOverNum[i].font ,gameOverNum[i].textAlign ,gameOverNum[i].fillText, gameOverNum[i].fillTextX, gameOverNum[i].fillTextY);
+                        }
+                        //5秒走完所有的分数
+                        step+=Math.floor(self.gameM*12*12/200);
+                        if(step>=self.gameM*12*12){
+                            step=self.gameM*12*12;
+                        }
+                        //画路径
+                        // self.ctx.strokeRect(115,558,290,70);
+                        // self.ctx.strokeRect(530,558,290,70);
+                        self.ctx.rect(115,558,290,70);
+                        self.ctx.rect(530,558,290,70);
+                        //判断路径
+                        if (self.ctx.isPointInPath(self.x, self.y)) {
+                            console.log("点击成功");
+                            begin = false;
+                            self.x = 0;//将点击事件的坐标进行归零,不然会出发其他路径的事件
+                            self.y = 0;
+                        };
+                        if (begin) {
+                            window.requestAnimationFrame(rander2);
+                        } else {
+                            //点击返回,返回到准备开始游戏界面
+                            self.begin();
+                        }
+                    })();
+                });
+            },
+            clear:function (){
+                self.ctx.clearRect(0, 0, cv.width, cv.height);
+                self.ctx.beginPath();
+            }
+        };
+        Fly.Login = Login;
+    })(Fly);
+    var a = new Fly.Login({ctx: ctx});
+    a.login();
+</script>
+</body>
+</html>
